@@ -27,6 +27,8 @@ end
 girl={}
 girl.new=function()
 	local obj=actor.new(0x10)
+	-- normal,wonder,escape
+	obj.status="normal"
 	
 	obj.start_move=function(self,x,y,dir_type)
 		self.x=x;self.y=y
@@ -84,125 +86,132 @@ function sort_min_y(acts)
 		end
 	end
 end
---[[
-members
---]]
-actors={}
-
-pl=actor.new()
-pl.is_real=true
-add(actors,pl)
-
-gl_cnt=10
-gls={}
-for i=1,gl_cnt do
-	gls[i]=girl.new()
-	add(actors,gls[i])
-end
 
 --[[
 original func
 --]]
 function _init()
-	pl.x=70
-	pl.y=70
-	init_girls()
+	actors={}
+
+	--player
+	pl=actor.new()
+	add(actors,pl)
+	init_player(pl)
 	
+	--girls
+	girls_max=10
+	girls={}
+	for i=1,girls_max do
+		girls[i]=girl.new()
+		add(actors,girls[i])
+	end
+	init_girls(girls,girls_max)
+	
+	--debug
 	debug_init()
 end
 
 function _update()
-	update_player()
-	update_girls_wave()
-	update_girls()
+	update_player(pl)
+	update_girls_wave(girls)
+	update_girls(girls)
 end
 
 function _draw()
 	rectfill(0,0,127,127,6)
+	
+	--draw all actor
 	draw_actors=actors
 	sort_min_y(draw_actors)
 	foreach(draw_actors,draw_actor)
-	--draw_girls(0,pl.y)
-	--draw_player()
-	--draw_girls(pl.y,127)
 end
 
 --[[
 girls functions
 --]]
-function init_girls()
-	for i=1,gl_cnt do
+function init_girls(gls,cnt_m)
+	for i=1,cnt_m do
 		gls[i].x=10*i
 		gls[i].y=10*i
 	end
 end
 
-function update_girls()
-	update_girls_ai()
-	update_girls_anim()
+function update_girls(gls)
+	update_girls_ai(gls)
+	update_girls_anim(gls)
 end
 
-function update_girls_ai()
+function update_girls_ai(gls)
 	foreach(gls,move_girl)
 end
 
-girls_move_speed=0.3
-function move_girl(girl)
-	if(not girl.is_real)return
-	
-	if girl.dir_type=="up" then
-		girl.y-=girls_move_speed
+function move_girl(gl)
+	if(not gl.is_real)return
+
+	local girls_move_speed=0.3	
+	if gl.dir_type=="up" then
+		gl.y-=girls_move_speed
 	else
-		girl.y+=girls_move_speed
+		gl.y+=girls_move_speed
 	end
 end
 
-function update_girls_anim()
+function update_girls_anim(gls)
 	foreach(gls,anim_actor)
-end
-
-function draw_girls(min_y,max_y)
-	local spr_offset=0x10
-	for i,gl in pairs(gls) do
-		if gl.y>=min_y and gl.y<=max_y then
-			draw_actor(gl)
-		end
-	end
 end
 
 --[[
 girls wave
 --]]
-gl_wave_t=0--countdown timer
+gl_wave_t=0--countdown
 gl_wave_interval=30
 gl_wave={0,1,4,5,6,9,10,11,14,15}
-function update_girls_wave()
-	for i,gl in pairs(gls) do
-		if gl.is_real then
-			if(gl.y<=0 or gl.y>=127) gl.is_real=false;break 
-		end
-	end
+gl_wave_max=5
+function update_girls_wave(gls)
+	unreal_if_needed(gls)
 	
-	if gl_wave_t<=0 then
-		gl_wave_t=gl_wave_interval
-		local ebl_gl=get_can_enable_girl()
-		if ebl_gl~=nil then
-			dir_type="up"
-			if flr(rnd(2))==1 then
-				dir_type="down"
-			end
-			local y=(dir_type=="up")and 127 or 0
-			local w_idx=flr(rnd(#gl_wave))+1
-			local x=gl_wave[w_idx]*8			
-			
-			ebl_gl:start_move(x,y,dir_type)
-		end
-	else
-		gl_wave_t-=1
-	end 
+	-- limit
+	local real_cnt=get_real_girl_count(gls)
+	if(real_cnt>=gl_wave_max) return;
+	
+	-- timer
+	gl_wave_t-=1
+	if(gl_wave_t>0) return;
+	
+	-- can enable
+	gl_wave_t=gl_wave_interval
+	local ebl_gl=get_can_enable_girl(gls)
+	if(ebl_gl==nil) return;
+	
+	-- start girl
+	dir_type="up"
+	if flr(rnd(2))==1 then
+		dir_type="down"
+	end
+	local y=(dir_type=="up")and 127 or 0
+	local w_idx=flr(rnd(#gl_wave))+1
+	local x=gl_wave[w_idx]*8			
+	
+	ebl_gl:start_move(x,y,dir_type)
 end
 
-function get_can_enable_girl()
+function get_real_girl_count(gls)
+	local cnt=0
+	for i,gl in pairs(gls) do
+		if(gl.is_real) cnt+=1
+	end
+	return cnt
+end
+
+function unreal_if_needed(gls)
+	for i,gl in pairs(gls) do
+		if gl.is_real then
+			if(gl.y<=0 or gl.y>=127) gl.is_real=false;
+		end
+	end
+end
+
+function get_can_enable_girl(gls)
 	for i,gl in pairs(gls) do
 		if not gl.is_real then
 			return gl
@@ -214,33 +223,35 @@ end
 --[[
 player functions
 --]]
-function update_player()
+function init_player(p)
+	p.is_real=true
+	p.x=70
+	p.y=70
+end
+
+function update_player(p)
 	-- pushed action
 	if(btn(4))then
-			switch_open()
+			switch_open(p)
 	-- move
 	else
-		if(btn(0))pl.x-=1
-		if(btn(1))pl.x+=1
-		if(btn(2))pl.y-=1;pl:switch_dir("up")
-		if(btn(3))pl.y+=1;pl:switch_dir("down")	
+		if(btn(0))p.x-=1
+		if(btn(1))p.x+=1
+		if(btn(2))p.y-=1;p:switch_dir("up")
+		if(btn(3))p.y+=1;p:switch_dir("down")	
 		
-		update_player_anim()
+		update_player_anim(p)
 	end
 end
 
-function draw_player()
-	draw_actor(pl)
-end
-
-function update_player_anim()
+function update_player_anim(p)
 	-- if open switch just now
-	if(band(pl.spr_idx,0x6)==0x6)switch_foot_actor(pl);return
-	anim_actor(pl)
+	if(band(p.spr_idx,0x6)==0x6)switch_foot_actor(p);return
+	anim_actor(p)
 end
 
-function switch_open()
-	pl.spr_idx=bor(pl.spr_idx,0x6)
+function switch_open(p)
+	p.spr_idx=bor(p.spr_idx,0x6)
 end
 
 --[[
