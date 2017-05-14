@@ -2,6 +2,40 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 npc_debug=false
+
+col={}
+col.new=function(w,h)
+	local obj={}
+	obj.x=0
+	obj.y=0
+	obj.w=w-1
+	obj.h=h-1
+		
+	obj.move=function(s,x,y)
+		local size_x=s.w-s.x
+		local size_y=s.h-s.y
+		
+		s.x=x
+		s.w=x+size_x
+		s.y=y
+		s.h=y+size_y
+	end
+	
+	obj.draw=function(s,clr)
+		rect(s.x,s.y,s.w,s.h,clr)
+	end
+	
+	return obj
+end
+
+function check_col(col_a,col_b)
+	if(col_a.x>col_b.w) return false
+	if(col_a.y>col_b.h) return false
+	if(col_a.w<col_b.x) return false
+	if(col_a.h<col_b.y) return false
+	
+	return true
+end
 --[[
 actor functions
 --]]
@@ -39,6 +73,13 @@ girl.new=function()
 	return obj
 end
 
+player={}
+player.new=function()
+	local obj=actor.new(0)
+	obj.col=col.new(8,8)
+	
+	return obj
+end
 --[[
 actor functions
 --]]
@@ -94,7 +135,7 @@ function _init()
 	actors={}
 
 	--player
-	pl=actor.new()
+	pl=player.new()
 	add(actors,pl)
 	init_player(pl)
 	
@@ -242,6 +283,8 @@ function update_player(p)
 		
 		update_player_anim(p)
 	end
+	
+	p.col:move(p.x,p.y)
 end
 
 function update_player_anim(p)
