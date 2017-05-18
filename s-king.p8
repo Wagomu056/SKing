@@ -63,6 +63,7 @@ girl.new=function()
 	local obj=actor.new(0x10)
 	-- normal,wonder,escape
 	obj.status="normal"
+	obj.sight=col.new(8,16)
 	
 	obj.start_move=function(self,x,y,dir_type)
 		self.x=x;self.y=y
@@ -161,10 +162,13 @@ end
 function _draw()
 	rectfill(0,0,127,127,6)
 	
-	--draw all actor
+	-- draw all actor
 	draw_actors=actors
 	sort_min_y(draw_actors)
 	foreach(draw_actors,draw_actor)
+	
+	-- debug
+	debug_draw()
 end
 
 --[[
@@ -178,8 +182,17 @@ function init_girls(gls,cnt_m)
 end
 
 function update_girls(gls)
+	foreach(gls,draw_girl_sight)
+	update_girls_coll(gls)
 	update_girls_ai(gls)
 	update_girls_anim(gls)
+end
+
+function update_girls_coll(gls)
+end
+
+function draw_girl_sight(gl)
+	gl.sight:draw(11)
 end
 
 function update_girls_ai(gls)
@@ -307,6 +320,12 @@ end
 function debug_init()
 	menuitem(1,"npc_debug",
 	function()debug_switch_npc()end)
+end
+
+function debug_draw()
+	if npc_debug then
+		foreach(girls,draw_girl_sight)
+	end
 end
 __gfx__
 00011000000110000001100000011000000110000001100000011000000110000000000000000000000000000000000000000000000000000000000000000000
