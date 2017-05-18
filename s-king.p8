@@ -65,10 +65,16 @@ girl.new=function()
 	obj.status="normal"
 	obj.sight=col.new(8,16)
 	
-	obj.start_move=function(self,x,y,dir_type)
+	obj.respawn=function(self,x,y,dir_type)
 		self.x=x;self.y=y
 		self.dir_type=dir_type
 		self.is_real=true
+		
+		local sight_offset=8
+		if dir_type=="up" then
+			sight_offset=-8
+		end
+		self.sight:move(x,y+sight_offset)
 	end
 	
 	return obj
@@ -147,7 +153,6 @@ function _init()
 		girls[i]=girl.new()
 		add(actors,girls[i])
 	end
-	init_girls(girls,girls_max)
 	
 	--debug
 	debug_init()
@@ -174,13 +179,6 @@ end
 --[[
 girls functions
 --]]
-function init_girls(gls,cnt_m)
-	for i=1,cnt_m do
-		gls[i].x=10*i
-		gls[i].y=10*i
-	end
-end
-
 function update_girls(gls)
 	foreach(gls,draw_girl_sight)
 	update_girls_coll(gls)
@@ -246,7 +244,7 @@ function update_girls_wave(gls)
 	local w_idx=flr(rnd(#gl_wave))+1
 	local x=gl_wave[w_idx]*8			
 	
-	ebl_gl:start_move(x,y,dir_type)
+	ebl_gl:respawn(x,y,dir_type)
 end
 
 function get_real_girl_count(gls)
