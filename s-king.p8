@@ -48,6 +48,7 @@ end
 --[[
 actor functions
 --]]
+local default_anim_interval=16
 actor={}
 actor.new=function(spr_offset)
 	local obj={}
@@ -59,13 +60,14 @@ actor.new=function(spr_offset)
 	obj.spr_offset=spr_offset
 	obj.is_r_foot=false
 	obj.dir_type="down"
+	obj.anim_interval=default_anim_interval
 	
 	obj.switch_dir=function(self,dir_type)
 		self.dir_type=dir_type
 	end
 	
-	obj.set_spr_offset=function(self,spr_offset)
-		self.spr_offset=spr_offset
+	obj.reset_anim_interval=function(self)
+		self.anim_interval=default_anim_interval
 	end
 	
 	return obj
@@ -77,6 +79,7 @@ girl.new=function()
 	-- normal,wonder,escape
 	obj.status="normal"
 	obj.sight=col.new(8,16)
+	obj.speed_rate=1.0
 	
 	obj.respawn=function(self,x,y,dir_type)
 		self.x=x;self.y=y
@@ -103,6 +106,17 @@ girl.new=function()
 		self.sight:move(self.x,self.y)
 	end
 
+	obj.set_speed_rate=function(self,rate)
+		self.speed_rate=rate
+		
+		self.anim_interval=
+			default_anim_interval/rate
+	end
+	
+	obj.get_speed=function(self)
+		return 0.3*self.speed_rate
+	end
+	
 	obj.mirror_dir=function(self)
 		if self.dir_type=="up" then
 			self.dir_type="down"
@@ -118,9 +132,11 @@ girl.new=function()
 		self.status=status
 		if self.status=="escape" then
 			self:mirror_dir()
-			self:set_spr_offset(0x20)
+			self.spr_offset=0x20
+			self:set_speed_rate(3.0)
 		elseif self.status=="normal" then
-			self:set_spr_offset(0x10)
+			self.spr_offset=0x10
+			self:set_speed_rate(1.0)
 		end
 	end	
 	return obj
@@ -149,7 +165,7 @@ function anim_actor(actor)
 	if(actor.dir_type=="up")actor.spr_idx=bor(actor.spr_idx,0x1)
 	
 	actor.t+=1
-	if(actor.t%16==0)then
+	if(actor.t%actor.anim_interval<1)then
 		switch_foot_actor(actor)
 	end
 end
@@ -252,7 +268,7 @@ end
 function move_girl(gl)
 	if(not gl.is_real)return
 	
-	local speed=0.3
+	local speed=gl:get_speed()
 	if gl.dir_type=="up" then
 		speed*=-1
 	end
