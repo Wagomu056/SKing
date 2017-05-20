@@ -223,6 +223,8 @@ function update_girls_sight(gls)
 end
 
 function girl_sight_check(gl)
+	if(pl.status!="open") return
+	
 	if check_col(pl.col,gl.sight) then
 		if gl.status=="normal" then
 			gl:mirror_dir()
@@ -320,29 +322,28 @@ end
 
 function update_player(p)
 	-- pushed action
-	if(btn(4))then
-			switch_open(p)
+	pre_status=p.status
+	p.status=btn(4)and"open"or"normal"
+
+	if pre_status!=p.status then
+		if p.status=="open" then
+			p.spr_idx=bor(p.spr_idx,0x6)
+		else
+			p.spr_idx=band(p.spr_idx,not 0x6)
+		end
+	end
+	
 	-- move
-	else
+	if p.status=="normal" then
 		if(btn(0))p.x-=1
 		if(btn(1))p.x+=1
 		if(btn(2))p.y-=1;p:switch_dir("up")
 		if(btn(3))p.y+=1;p:switch_dir("down")	
 		
-		update_player_anim(p)
+		anim_actor(p)
 	end
 	
 	p.col:move(p.x,p.y)
-end
-
-function update_player_anim(p)
-	-- if open switch just now
-	if(band(p.spr_idx,0x6)==0x6)switch_foot_actor(p);return
-	anim_actor(p)
-end
-
-function switch_open(p)
-	p.spr_idx=bor(p.spr_idx,0x6)
 end
 
 --[[
