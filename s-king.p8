@@ -10,15 +10,24 @@ col.new=function(w,h)
 	obj.y=0
 	obj.w=w-1
 	obj.h=h-1
-		
+	obj.offset_x=0
+	obj.offset_y=0
+	
+	obj.set_offset=function(s,x,y)
+		s.offset_x=x
+		s.offset_y=y	
+	end
+	
 	obj.move=function(s,x,y)
 		local size_x=s.w-s.x
 		local size_y=s.h-s.y
+		local off_x=s.offset_x
+		local off_y=s.offset_y
 		
-		s.x=x
-		s.w=x+size_x
-		s.y=y
-		s.h=y+size_y
+		s.x=x+off_x
+		s.w=x+size_x+off_x
+		s.y=y+off_y
+		s.h=y+size_y+off_y
 	end
 	
 	obj.draw=function(s,clr)
@@ -69,12 +78,20 @@ girl.new=function()
 		self.x=x;self.y=y
 		self.dir_type=dir_type
 		self.is_real=true
-		
+
 		local sight_offset=8
 		if dir_type=="up" then
-			sight_offset=-8
+			sight_offset=-12
+		else
+			sight_offset=4
 		end
-		self.sight:move(x,y+sight_offset)
+		self.sight:set_offset(0,sight_offset)
+	end
+	
+	obj.move=function(self,x,y)
+		self.x+=x
+		self.y+=y
+		self.sight:move(self.x,self.y)
 	end
 	
 	return obj
@@ -180,7 +197,6 @@ end
 girls functions
 --]]
 function update_girls(gls)
-	foreach(gls,draw_girl_sight)
 	update_girls_coll(gls)
 	update_girls_ai(gls)
 	update_girls_anim(gls)
@@ -189,23 +205,19 @@ end
 function update_girls_coll(gls)
 end
 
-function draw_girl_sight(gl)
-	gl.sight:draw(11)
-end
-
 function update_girls_ai(gls)
 	foreach(gls,move_girl)
 end
 
 function move_girl(gl)
 	if(not gl.is_real)return
-
-	local girls_move_speed=0.3	
+	
+	local speed=0.3
 	if gl.dir_type=="up" then
-		gl.y-=girls_move_speed
-	else
-		gl.y+=girls_move_speed
+		speed*=-1
 	end
+	
+	gl:move(0,speed)
 end
 
 function update_girls_anim(gls)
@@ -324,6 +336,11 @@ function debug_draw()
 	if npc_debug then
 		foreach(girls,draw_girl_sight)
 	end
+end
+
+function draw_girl_sight(gl)
+	if(is_not_real(gl))return
+	gl.sight:draw(11)
 end
 __gfx__
 00011000000110000001100000011000000110000001100000011000000110000000000000000000000000000000000000000000000000000000000000000000
