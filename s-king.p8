@@ -78,9 +78,14 @@ girl.new=function()
 		self.x=x;self.y=y
 		self.dir_type=dir_type
 		self.is_real=true
-
+		self.status="normal"
+		
+		self:set_sight_offset()
+	end
+	
+	obj.set_sight_offset=function(self)
 		local sight_offset=8
-		if dir_type=="up" then
+		if self.dir_type=="up" then
 			sight_offset=-12
 		else
 			sight_offset=4
@@ -93,7 +98,16 @@ girl.new=function()
 		self.y+=y
 		self.sight:move(self.x,self.y)
 	end
-	
+
+	obj.mirror_dir=function(self)
+		if self.dir_type=="up" then
+			self.dir_type="down"
+		else
+			self.dir_type="up"
+		end
+		self:set_sight_offset()
+	end
+		
 	return obj
 end
 
@@ -101,6 +115,8 @@ player={}
 player.new=function()
 	local obj=actor.new(0)
 	obj.col=col.new(8,8)
+	-- normal,open
+	obj.status="normal"
 	
 	return obj
 end
@@ -197,12 +213,21 @@ end
 girls functions
 --]]
 function update_girls(gls)
-	update_girls_coll(gls)
+	update_girls_sight(gls)
 	update_girls_ai(gls)
 	update_girls_anim(gls)
 end
 
-function update_girls_coll(gls)
+function update_girls_sight(gls)
+	foreach(gls,girl_sight_check)
+end
+
+function girl_sight_check(gl)
+	if check_col(pl.col,gl.sight) then
+		if gl.status=="normal" then
+			gl:mirror_dir()
+		end
+	end
 end
 
 function update_girls_ai(gls)
