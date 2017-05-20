@@ -64,6 +64,10 @@ actor.new=function(spr_offset)
 		self.dir_type=dir_type
 	end
 	
+	obj.set_spr_offset=function(self,spr_offset)
+		self.spr_offset=spr_offset
+	end
+	
 	return obj
 end
 
@@ -78,7 +82,7 @@ girl.new=function()
 		self.x=x;self.y=y
 		self.dir_type=dir_type
 		self.is_real=true
-		self.status="normal"
+		self:set_status("normal")
 		
 		self:set_sight_offset()
 	end
@@ -107,7 +111,18 @@ girl.new=function()
 		end
 		self:set_sight_offset()
 	end
+	
+	obj.set_status=function(self,status)
+		if(self.status==status) return
 		
+		self.status=status
+		if self.status=="escape" then
+			self:mirror_dir()
+			self:set_spr_offset(0x20)
+		elseif self.status=="normal" then
+			self:set_spr_offset(0x10)
+		end
+	end	
 	return obj
 end
 
@@ -226,9 +241,7 @@ function girl_sight_check(gl)
 	if(pl.status!="open") return
 	
 	if check_col(pl.col,gl.sight) then
-		if gl.status=="normal" then
-			gl:mirror_dir()
-		end
+		gl:set_status("escape")
 	end
 end
 
