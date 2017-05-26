@@ -78,7 +78,8 @@ girl.new=function()
 	local obj=actor.new(0x10)
 	-- normal,wonder,escape
 	obj.status="normal"
-	obj.sight=col.new(8,16)
+	obj.sight_length=32
+	obj.sight=col.new(8,obj.sight_length)
 	obj.speed_rate=1.0
 	
 	obj.respawn=function(self,x,y,dir_type)
@@ -93,7 +94,7 @@ girl.new=function()
 	obj.set_sight_offset=function(self)
 		local sight_offset=8
 		if self.dir_type=="up" then
-			sight_offset=-12
+			sight_offset=-self.sight_length+4
 		else
 			sight_offset=4
 		end
@@ -134,6 +135,8 @@ girl.new=function()
 			self:mirror_dir()
 			self.spr_offset=0x20
 			self:set_speed_rate(3.0)
+		elseif self.status=="wonder" then
+			self:set_speed_rate(0.0)
 		elseif self.status=="normal" then
 			self.spr_offset=0x10
 			self:set_speed_rate(1.0)
@@ -254,10 +257,12 @@ function update_girls_sight(gls)
 end
 
 function girl_sight_check(gl)
-	if(pl.status!="open") return
-	
 	if check_col(pl.col,gl.sight) then
-		gl:set_status("escape")
+		if pl.status=="open" then
+			gl:set_status("escape")
+		else
+			gl:set_status("wonder")
+		end
 	end
 end
 
