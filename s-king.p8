@@ -132,16 +132,18 @@ girl.new=function()
 		if(self.status==status) return
 		
 		self.status=status
-		if self.status=="escape" then
-			self:mirror_dir()
+		if status=="discovery" then
 			self.spr_offset=0x20
-			self:set_speed_rate(3.0)
-		elseif self.status=="wonder" then
 			self:set_speed_rate(0.0)
-		elseif self.status=="leav" then
+		elseif status=="escape" then
+			self:mirror_dir()
+			self:set_speed_rate(3.0)
+		elseif status=="wonder" then
+			self:set_speed_rate(0.0)
+		elseif status=="leav" then
 			self:mirror_dir()
 			self:set_speed_rate(2.0)
-		elseif self.status=="normal" then
+		elseif status=="normal" then
 			self.spr_offset=0x10
 			self:set_speed_rate(1.0)
 		end
@@ -266,7 +268,7 @@ function girl_sight_check(gl)
 	if check_col(pl.col,gl.sight) then
 		if pl.status=="open" then
 			if pl.dir_type~=gl.dir_type then
-				gl:set_status("escape")
+				gl:set_status("discovery")
 			end
 		else
 			gl:set_status("wonder")
@@ -281,9 +283,15 @@ end
 
 function update_status(gl)
 	gl.status_timer+=1
-	if gl.status=="wonder" and
-				gl.status_timer>=15 then
+	
+	if gl.status=="wonder" then
+		if gl.status_timer>=15 then
 				gl:set_status("leav")
+		end
+	elseif gl.status=="discovery" then
+		if gl.status_timer>=30 then
+			gl:set_status("escape")
+		end
 	end
 end
 
