@@ -232,6 +232,7 @@ function _init()
 	
 	--debug
 	debug_init()
+	debug_print=nil
 end
 
 function _update()
@@ -396,33 +397,38 @@ function update_player(p)
 	
 	-- move
 	if p.status=="normal" then
-		local new_pos={}
-		new_pos.x=p.x
-		new_pos.y=p.y
-		new_pos.dir_type=nil
+		local c_pos={}
+		c_pos.x=p.x
+		c_pos.y=p.y
 		
 		if btn(0) then
-			new_pos.x-=1
-			new_pos.dir_type="left"
-		end
-		if btn(1) then
-			new_pos.x+=1
-			new_pos.dir_type="right"
-		end
-		if btn(2) then
-			new_pos.y-=1
-			new_pos.dir_type="up"
-			p:switch_dir("up")
-		end
-		if btn(3) then
-			new_pos.y+=1
-			new_pos.dir_type="down"
-			p:switch_dir("down")
+			local n_pos=c_pos
+			n_pos.x-=1
+			if not check_wall(n_pos,"left") then
+				p.x-=1
+			end
+		elseif btn(1) then
+			local n_pos=c_pos
+			n_pos.x+=1
+			if not check_wall(n_pos,"right") then
+				p.x+=1
+			end
 		end
 		
-		if not check_wall(new_pos.x,new_pos.y,new_pos.dir_type) then
-			p.x=new_pos.x
-			p.y=new_pos.y
+		if btn(2) then
+			local n_pos=c_pos
+			n_pos.y-=1
+			if not check_wall(n_pos,"up") then
+				p.y-=1
+			end
+			p:switch_dir("up")
+		elseif btn(3) then
+			local n_pos=c_pos
+			n_pos.y+=1
+			if not check_wall(n_pos,"down") then
+				p.y+=1
+			end
+			p:switch_dir("down")
 		end
 		
 		anim_actor(p)
@@ -431,15 +437,16 @@ function update_player(p)
 	p.col:move(p.x,p.y)
 end
 
-function check_wall(x,y,dir_type)
+function check_wall(pos,dir_type)
 	local d=dir_type
-	if(d=="right") x+=8
-	if(d=="down") y+=8
+	if(d=="right") pos.x+=8
+	if(d=="down") pos.y+=8
 	
-	local map_f=mget(x/8,y/8)
-	printh("x:"..x.."y:"..y.."f:"..map_f)
-	return (band(map_f,0x1)~=0)
+	local map_val=mget(pos.x/8,pos.y/8)
+	debug_print=("x:"..pos.x/8 .. "y:".. pos.y/8 .."f:"..map_val)
+	return (fget(map_val,0))
 end
+
 --[[
 debug
 --]]
@@ -453,6 +460,9 @@ function debug_init()
 end
 
 function debug_draw()
+	if debug_print~=nil then
+		print(debug_print,0,0,5)
+	end
 	if npc_debug then
 		foreach(girls,draw_girl_sight)
 	end
