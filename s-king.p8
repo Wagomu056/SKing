@@ -439,11 +439,51 @@ end
 
 function check_wall(pos,dir_type)
 	local d=dir_type
-	if(d=="right") pos.x+=8
-	if(d=="down") pos.y+=8
+	local pos_a={}
+	local pos_b={}
 	
+	if d=="up" then
+		pos_a,pos_b=get_wall_check_offset(pos,1,2)
+	elseif d=="down" then
+		pos_a,pos_b=get_wall_check_offset(pos,3,4)
+	elseif d=="right" then
+		pos_a,pos_b=get_wall_check_offset(pos,2,4)
+	elseif d=="left" then
+		pos_a,pos_b=get_wall_check_offset(pos,1,3)
+	end
+	
+	if(is_wall_map(pos_a))then
+		debug_print="hit_a"
+		return true
+	end
+	if(is_wall_map(pos_b))then
+		debug_print="hit_b"
+	 return true
+	end
+	debug_print="hit_none"
+	return false
+end
+
+function get_wall_check_offset(pos,off_idx_a,off_idx_b)
+	local check_offset={
+		{x=0,y=0},
+		{x=7,y=0},
+		{x=0,y=7},
+		{x=7,y=7}
+	}
+	
+	local a={}
+	local b={}
+	a.x=pos.x+check_offset[off_idx_a].x
+	a.y=pos.y+check_offset[off_idx_a].y
+	b.x=pos.x+check_offset[off_idx_b].x
+	b.y=pos.y+check_offset[off_idx_b].y
+	
+	return a,b
+end
+
+function is_wall_map(pos)
 	local map_val=mget(pos.x/8,pos.y/8)
-	debug_print=("x:"..pos.x/8 .. "y:".. pos.y/8 .."f:"..map_val)
 	return (fget(map_val,0))
 end
 
