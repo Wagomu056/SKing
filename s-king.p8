@@ -400,21 +400,8 @@ function update_player(p)
 		local c_pos={}
 		c_pos.x=p.x
 		c_pos.y=p.y
-		
-		if btn(0) then
-			local n_pos=c_pos
-			n_pos.x-=1
-			if not check_wall(n_pos,"left") then
-				p.x-=1
-			end
-		elseif btn(1) then
-			local n_pos=c_pos
-			n_pos.x+=1
-			if not check_wall(n_pos,"right") then
-				p.x+=1
-			end
-		end
-		
+		printh("====")
+		printh("pre_y:" .. c_pos.y)
 		if btn(2) then
 			local n_pos=c_pos
 			n_pos.y-=1
@@ -430,6 +417,21 @@ function update_player(p)
 			end
 			p:switch_dir("down")
 		end
+		printh("aft_y:" .. c_pos.y)
+		printh("====")
+		if btn(0) then
+			local n_pos=c_pos
+			n_pos.x-=1
+			if not check_wall(n_pos,"left") then
+				p.x-=1
+			end
+		elseif btn(1) then
+			local n_pos=c_pos
+			n_pos.x+=1
+			if not check_wall(n_pos,"right") then
+				p.x+=1
+			end
+		end
 		
 		anim_actor(p)
 	end
@@ -441,26 +443,32 @@ function check_wall(pos,dir_type)
 	local d=dir_type
 	local pos_a={}
 	local pos_b={}
-	
+	local check_pos={}
+	check_pos.x=pos.x
+	check_pos.y=pos.y
 	if d=="up" then
-		pos_a,pos_b=get_wall_check_offset(pos,1,2)
+		check_pos.y-=1
+		pos_a,pos_b=get_wall_check_offset(check_pos,1,2)
 	elseif d=="down" then
-		pos_a,pos_b=get_wall_check_offset(pos,3,4)
+		check_pos.y+=1
+		pos_a,pos_b=get_wall_check_offset(check_pos,3,4)
 	elseif d=="right" then
-		pos_a,pos_b=get_wall_check_offset(pos,2,4)
+		check_pos.x+=1
+		pos_a,pos_b=get_wall_check_offset(check_pos,2,4)
 	elseif d=="left" then
-		pos_a,pos_b=get_wall_check_offset(pos,1,3)
+		check_pos.x+=1
+		pos_a,pos_b=get_wall_check_offset(check_pos,1,3)
 	end
 	
 	if(is_wall_map(pos_a))then
-		debug_print="hit_a"
+		--debug_print="hit_a"
 		return true
 	end
 	if(is_wall_map(pos_b))then
-		debug_print="hit_b"
+		--debug_print="hit_b"
 	 return true
 	end
-	debug_print="hit_none"
+	--debug_print="hit_none"
 	return false
 end
 
@@ -484,6 +492,13 @@ end
 
 function is_wall_map(pos)
 	local map_val=mget(pos.x/8,pos.y/8)
+	
+	if (fget(map_val,0)) then
+		debug_print="hit x:" .. pos.x .. "y:" .. pos.y
+	else
+		debug_print="x:" .. pos.x .. "y:" .. pos.y
+	end
+	
 	return (fget(map_val,0))
 end
 
@@ -501,7 +516,7 @@ end
 
 function debug_draw()
 	if debug_print~=nil then
-		print(debug_print,0,0,5)
+		print(debug_print,1,1,5)
 	end
 	if npc_debug then
 		foreach(girls,draw_girl_sight)
