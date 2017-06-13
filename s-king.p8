@@ -397,38 +397,24 @@ function update_player(p)
 	
 	-- move
 	if p.status=="normal" then
-		local c_pos={}
-		c_pos.x=p.x
-		c_pos.y=p.y
-		printh("====")
-		printh("pre_y:" .. c_pos.y)
 		if btn(2) then
-			local n_pos=c_pos
-			n_pos.y-=1
-			if not check_wall(n_pos,"up") then
+			if not check_wall(p,"up") then
 				p.y-=1
 			end
 			p:switch_dir("up")
 		elseif btn(3) then
-			local n_pos=c_pos
-			n_pos.y+=1
-			if not check_wall(n_pos,"down") then
+			if not check_wall(p,"down") then
 				p.y+=1
 			end
 			p:switch_dir("down")
 		end
-		printh("aft_y:" .. c_pos.y)
-		printh("====")
+
 		if btn(0) then
-			local n_pos=c_pos
-			n_pos.x-=1
-			if not check_wall(n_pos,"left") then
+			if not check_wall(p,"left") then
 				p.x-=1
 			end
 		elseif btn(1) then
-			local n_pos=c_pos
-			n_pos.x+=1
-			if not check_wall(n_pos,"right") then
+			if not check_wall(p,"right") then
 				p.x+=1
 			end
 		end
@@ -440,65 +426,61 @@ function update_player(p)
 end
 
 function check_wall(pos,dir_type)
-	local d=dir_type
-	local pos_a={}
-	local pos_b={}
-	local check_pos={}
-	check_pos.x=pos.x
-	check_pos.y=pos.y
-	if d=="up" then
-		check_pos.y-=1
-		pos_a,pos_b=get_wall_check_offset(check_pos,1,2)
-	elseif d=="down" then
-		check_pos.y+=1
-		pos_a,pos_b=get_wall_check_offset(check_pos,3,4)
-	elseif d=="right" then
-		check_pos.x+=1
-		pos_a,pos_b=get_wall_check_offset(check_pos,2,4)
-	elseif d=="left" then
-		check_pos.x+=1
-		pos_a,pos_b=get_wall_check_offset(check_pos,1,3)
-	end
+	local pos_a,pos_b=get_wall_check_pos(pos,dir_type)
 	
-	if(is_wall_map(pos_a))then
-		--debug_print="hit_a"
-		return true
-	end
-	if(is_wall_map(pos_b))then
-		--debug_print="hit_b"
-	 return true
-	end
-	--debug_print="hit_none"
+	if(is_wall_map(pos_a)) return true
+	if(is_wall_map(pos_b)) return true
+
 	return false
 end
 
-function get_wall_check_offset(pos,off_idx_a,off_idx_b)
-	local check_offset={
+function get_wall_check_pos(pos,dir_type)
+	--offset base pos
+	local offset={
+		up   ={x=0, y=-1},
+		down ={x=0, y=1},
+		right={x=1, y=0},
+		left ={x=-1,y=0}
+	}
+	
+	local base={}
+	base.x=pos.x+offset[dir_type].x
+	base.y=pos.y+offset[dir_type].y	
+	
+	--vertex by dir type
+	local v=7
+	local ver={
 		{x=0,y=0},
-		{x=7,y=0},
-		{x=0,y=7},
-		{x=7,y=7}
+		{x=v,y=0},
+		{x=0,y=v},
+		{x=v,y=v}
+	}
+	local verset={
+		up   ={a=ver[1],b=ver[2]},
+		down ={a=ver[3],b=ver[4]},
+		right={a=ver[2],b=ver[4]},
+		left ={a=ver[1],b=ver[3]}
 	}
 	
 	local a={}
 	local b={}
-	a.x=pos.x+check_offset[off_idx_a].x
-	a.y=pos.y+check_offset[off_idx_a].y
-	b.x=pos.x+check_offset[off_idx_b].x
-	b.y=pos.y+check_offset[off_idx_b].y
+	a.x=base.x+verset[dir_type].a.x
+	a.y=base.y+verset[dir_type].a.y
+	b.x=base.x+verset[dir_type].b.x
+	b.y=base.y+verset[dir_type].b.y
 	
 	return a,b
 end
 
 function is_wall_map(pos)
 	local map_val=mget(pos.x/8,pos.y/8)
-	
+	--[[
 	if (fget(map_val,0)) then
 		debug_print="hit x:" .. pos.x .. "y:" .. pos.y
 	else
 		debug_print="x:" .. pos.x .. "y:" .. pos.y
 	end
-	
+	--]]
 	return (fget(map_val,0))
 end
 
