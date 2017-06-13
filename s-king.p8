@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
-npc_debug=false
+view_col=false
 
 col={}
 col.new=function(w,h)
@@ -79,7 +79,7 @@ girl.new=function()
 	-- normal,wonder,leav,escape
 	obj.status="normal"
 	obj.sight_length=32
-	obj.sight=col.new(8,obj.sight_length)
+	obj.sight=col.new(4,obj.sight_length)
 	obj.speed_rate=1.0
 	obj.status_timer=0
 	
@@ -93,13 +93,14 @@ girl.new=function()
 	end
 	
 	obj.set_sight_offset=function(self)
-		local sight_offset=8
+		local off_y=8
+		local off_x=2
 		if self.dir_type=="up" then
-			sight_offset=-self.sight_length+4
+			off_y=-self.sight_length+4
 		else
-			sight_offset=4
+			off_y=4
 		end
-		self.sight:set_offset(0,sight_offset)
+		self.sight:set_offset(off_x,off_y)
 	end
 	
 	obj.move=function(self,x,y)
@@ -488,11 +489,11 @@ end
 debug
 --]]
 function debug_switch_npc()
-	npc_debug=not npc_debug
+	view_col=not view_col
 end
 
 function debug_init()
-	menuitem(1,"npc_debug",
+	menuitem(1,"view_col",
 	function()debug_switch_npc()end)
 end
 
@@ -500,7 +501,8 @@ function debug_draw()
 	if debug_print~=nil then
 		print(debug_print,1,1,5)
 	end
-	if npc_debug then
+	if view_col then
+		pl.col:draw(11)
 		foreach(girls,draw_girl_sight)
 	end
 end
