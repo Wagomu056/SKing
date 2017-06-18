@@ -183,6 +183,14 @@ point.new=function()
 		self.score+=score
 	end
 	
+	obj.add_penalty=function(self)
+		sfx(4,3)
+		self.penalty+=1
+		if self.penalty>=penalty_max then
+			game_status="game_over"
+		end
+	end
+	
 	obj.draw=function(self)
 		rectfill(0,0,127,draw_min_y,0)
 		print("score:" .. self.score
@@ -272,15 +280,29 @@ function _init()
 	--point
 	pt=point.new()
 	
+	--game status
+	game_status="in_game"
+	is_pushed_button=false
+	
 	--debug
-	debug_init()
-	debug_print=nil
+	--debug_init()
+	--debug_print=nil
 end
 
 function _update()
-	update_player(pl)
-	update_girls_wave(girls)
-	update_girls(girls)
+	if game_status=="in_game" then
+		update_player(pl)
+		update_girls_wave(girls)
+		update_girls(girls)
+	elseif game_status=="game_over" then
+		if is_pushed_button==false then
+			if btn(4) or btn(5) then
+				_init()
+			end
+		end
+ end
+ 
+ is_pushed_button=(btn(4) or btn(5))
 end
 
 function _draw()
@@ -293,6 +315,12 @@ function _draw()
 	-- draw score
 	pt:draw()
 	
+	if game_status=="game_over" then
+		rectfill(0,56,127,72,0)
+		print("game over",48,56,7)
+		print("score:" .. pt.score,48,64,7)
+ end
+ 
 	-- debug
 	debug_draw()
 end
@@ -425,8 +453,7 @@ function unreal_if_needed(gls)
 			if gl.y<=draw_min_y or gl.y>=127 then
 				gl.is_real=false
 				if gl.status=="leav" then
-					sfx(4,2)
-					pt.penalty+=1
+					pt:add_penalty()
 				end
 			end
 		end
@@ -547,13 +574,6 @@ end
 
 function is_wall_map(pos)
 	local map_val=mget(pos.x/8,pos.y/8)
-	--[[
-	if (fget(map_val,0)) then
-		debug_print="hit x:" .. pos.x .. "y:" .. pos.y
-	else
-		debug_print="x:" .. pos.x .. "y:" .. pos.y
-	end
-	--]]
 	return (fget(map_val,0))
 end
 
@@ -751,7 +771,7 @@ __map__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
 000100001a650186501a6501a6501a6501c650186500d650206501965015650116500e65009650066500365001600016000160001600016000160001600016000160001600016000160001600016000160001600
-000404203a250382503c2503b2503f2503d2503d2503f2503f2503f2503e2503f2503e2503e2503c2503f2503f2503e2503d2503f2503f2503f2503f2503e2503e2503e2503f2503f2503e2503f2503f2503e250
+0004050925250282502c250312503525037250322503725032250362503625036250362503625035250342503425033250332503225032250302502f2502e2502c2502b2502a2502925028250272502625026250
 0008000028250232502e2503625000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00080000242502a2500e0000e0000c0000b0000a0000b0000d0000e0000f0000d0000c0000d0000e00010000100000d0000b0000c0000d0000d0000c0000b0000d0000d0000b0000c0000d0000e0000c0000b000
 001000001535010350153501035000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
