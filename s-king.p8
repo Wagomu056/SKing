@@ -14,28 +14,28 @@ col.new=function(w,h)
 	obj.h=h-1
 	obj.offset_x=0
 	obj.offset_y=0
-	
+
 	obj.set_offset=function(s,x,y)
 		s.offset_x=x
-		s.offset_y=y	
+		s.offset_y=y
 	end
-	
+
 	obj.move=function(s,x,y)
 		local size_x=s.w-s.x
 		local size_y=s.h-s.y
 		local off_x=s.offset_x
 		local off_y=s.offset_y
-		
+
 		s.x=x+off_x
 		s.w=x+size_x+off_x
 		s.y=y+off_y
 		s.h=y+size_y+off_y
 	end
-	
+
 	obj.draw=function(s,clr)
 		rect(s.x,s.y,s.w,s.h,clr)
 	end
-	
+
 	return obj
 end
 
@@ -44,7 +44,7 @@ function check_col(col_a,col_b)
 	if(col_a.y>col_b.h) return false
 	if(col_a.w<col_b.x) return false
 	if(col_a.h<col_b.y) return false
-	
+
 	return true
 end
 --[[
@@ -63,15 +63,15 @@ actor.new=function(spr_offset)
 	obj.is_r_foot=false
 	obj.dir_type="down"
 	obj.anim_interval=default_anim_interval
-	
+
 	obj.switch_dir=function(self,dir_type)
 		self.dir_type=dir_type
 	end
-	
+
 	obj.reset_anim_interval=function(self)
 		self.anim_interval=default_anim_interval
 	end
-	
+
 	return obj
 end
 
@@ -85,16 +85,16 @@ girl.new=function()
 	obj.speed_rate=1.0
 	obj.status_timer=0
 	obj.is_sight=false
-	
+
 	obj.respawn=function(self,x,y,dir_type)
 		self.x=x;self.y=y
 		self.dir_type=dir_type
 		self.is_real=true
 		self:set_status("normal")
-		
+
 		self:set_sight_offset()
 	end
-	
+
 	obj.set_sight_offset=function(self)
 		local off_y=8
 		local off_x=2
@@ -105,7 +105,7 @@ girl.new=function()
 		end
 		self.sight:set_offset(off_x,off_y)
 	end
-	
+
 	obj.move=function(self,x,y)
 		self.x+=x
 		self.y+=y
@@ -114,15 +114,15 @@ girl.new=function()
 
 	obj.set_speed_rate=function(self,rate)
 		self.speed_rate=rate
-		
+
 		self.anim_interval=
 			default_anim_interval/rate
 	end
-	
+
 	obj.get_speed=function(self)
 		return 0.3*self.speed_rate
 	end
-	
+
 	obj.mirror_dir=function(self)
 		if self.dir_type=="up" then
 			self.dir_type="down"
@@ -131,10 +131,10 @@ girl.new=function()
 		end
 		self:set_sight_offset()
 	end
-	
+
 	obj.set_status=function(self,status)
 		if(self.status==status) return
-		
+
 		self.status=status
 		if status=="discovery" then
 			self.spr_offset=0x20
@@ -156,9 +156,9 @@ girl.new=function()
 			self.spr_offset=0x10
 			self:set_speed_rate(1.0)
 		end
-		
+
 		self.status_timer=0
-	end	
+	end
 	return obj
 end
 
@@ -168,7 +168,7 @@ player.new=function()
 	obj.col=col.new(8,8)
 	-- normal,open
 	obj.status="normal"
-	
+
 	return obj
 end
 
@@ -178,11 +178,11 @@ point.new=function()
 	local obj={}
 	obj.score=0
 	obj.penalty=0
-	
+
 	obj.add_score=function(self,score)
 		self.score+=score
 	end
-	
+
 	obj.add_penalty=function(self)
 		sfx(4,3)
 		self.penalty+=1
@@ -190,24 +190,24 @@ point.new=function()
 			game_status="game_over"
 		end
 	end
-	
+
 	obj.draw=function(self)
 		rectfill(0,0,127,draw_min_y,0)
 		print("score:" .. self.score
 								--.. " penalty:" .. self.penalty
 								,0,0,7)
-								
+
 		local p_mark_x=127-(penalty_max*(8+1))
 		for i=1,penalty_max do
-			local spr_idx=9
+			local color=6
 			if i<=self.penalty then
-				spr_idx=8
+				color=10
 			end
-			spr(spr_idx,p_mark_x,0)
+			print("p",p_mark_x,0,color) 
 			p_mark_x+=8+1
 		end
 	end
-	
+
 	return obj
 end
 --[[
@@ -219,19 +219,19 @@ end
 
 function anim_actor(actor)
 	if(is_not_real(actor))return
-	
+
 	actor.spr_idx=band(actor.spr_idx,bnot(0x1))
 	if(actor.dir_type=="up")actor.spr_idx=bor(actor.spr_idx,0x1)
-	
+
 	actor.t+=1
 	if(actor.t%actor.anim_interval<1)then
 		switch_foot_actor(actor)
 	end
 end
-	
+
 function switch_foot_actor(actor)
 	if(is_not_real(actor))return
-	
+
 	actor.spr_idx=band(actor.spr_idx,bnot(0x6))
 	if(actor.is_r_foot)then
 		actor.spr_idx=bor(actor.spr_idx,0x2)
@@ -243,9 +243,9 @@ end
 
 function draw_actor(actor)
 	if(is_not_real(actor))return
-	
+
 	local spr_idx=bor(actor.spr_idx,actor.spr_offset)
-	spr(spr_idx,actor.x,actor.y)		
+	spr(spr_idx,actor.x,actor.y)
 end
 
 function sort_min_y(acts)
@@ -268,7 +268,7 @@ function _init()
 	pl=player.new()
 	add(actors,pl)
 	init_player(pl)
-	
+
 	--girls
 	girls_max=10
 	girls={}
@@ -276,14 +276,14 @@ function _init()
 		girls[i]=girl.new()
 		add(actors,girls[i])
 	end
-	
+
 	--point
 	pt=point.new()
-	
+
 	--game status
 	game_status="in_game"
 	is_pushed_button=false
-	
+
 	--debug
 	--debug_init()
 	--debug_print=nil
@@ -301,7 +301,7 @@ function _update()
 			end
 		end
  end
- 
+
  is_pushed_button=(btn(4) or btn(5))
 end
 
@@ -311,16 +311,16 @@ function _draw()
 	draw_actors=actors
 	sort_min_y(draw_actors)
 	foreach(draw_actors,draw_actor)
-	
+
 	-- draw score
 	pt:draw()
-	
+
 	if game_status=="game_over" then
 		rectfill(0,56,127,72,0)
 		print("game over",48,56,7)
 		print("score:" .. pt.score,48,64,7)
  end
- 
+
 	-- debug
 	debug_draw()
 end
@@ -340,7 +340,7 @@ end
 
 function girl_sight_check(gl)
 	gl.is_sight=false
-	
+
 	if check_col(pl.col,gl.sight) then
 		if is_foundable_pen(pl,gl) then
 			if should_change_discovery(gl) then
@@ -374,7 +374,7 @@ end
 
 function update_status(gl)
 	gl.status_timer+=1
-	
+
 	if gl.status=="wonder" then
 		if gl.status_timer>=15 then
 				gl:set_status("leav")
@@ -384,19 +384,19 @@ function update_status(gl)
 					gl.is_sight==false then
 						gl:set_status("escape")
 		end
-		
+
 		pt:add_score(1)
 	end
 end
 
 function move_girl(gl)
 	if(not gl.is_real)return
-	
+
 	local speed=gl:get_speed()
 	if gl.dir_type=="up" then
 		speed*=-1
 	end
-	
+
 	gl:move(0,speed)
 end
 
@@ -413,20 +413,20 @@ gl_wave={1,2,5,6,9,10,13,14}
 gl_wave_max=5
 function update_girls_wave(gls)
 	unreal_if_needed(gls)
-	
+
 	-- limit
 	local real_cnt=get_real_girl_count(gls)
 	if(real_cnt>=gl_wave_max) return;
-	
+
 	-- timer
 	gl_wave_t-=1
 	if(gl_wave_t>0) return;
-	
+
 	-- can enable
 	gl_wave_t=gl_wave_interval
 	local ebl_gl=get_can_enable_girl(gls)
 	if(ebl_gl==nil) return;
-	
+
 	-- start girl
 	dir_type="up"
 	if flr(rnd(2))==1 then
@@ -434,8 +434,8 @@ function update_girls_wave(gls)
 	end
 	local y=(dir_type=="up")and 127 or draw_min_y
 	local w_idx=flr(rnd(#gl_wave))+1
-	local x=gl_wave[w_idx]*8			
-	
+	local x=gl_wave[w_idx]*8
+
 	ebl_gl:respawn(x,y,dir_type)
 end
 
@@ -491,7 +491,7 @@ function update_player(p)
 			p.spr_idx=band(p.spr_idx,not 0x6)
 		end
 	end
-	
+
 	-- move
 	if p.status=="normal" then
 		if btn(2) then
@@ -518,16 +518,16 @@ function update_player(p)
 				p.x+=1
 			end
 		end
-		
+
 		anim_actor(p)
 	end
-	
+
 	p.col:move(p.x,p.y)
 end
 
 function check_wall(pos,dir_type)
 	local pos_a,pos_b=get_wall_check_pos(pos,dir_type)
-	
+
 	if(is_wall_map(pos_a)) return true
 	if(is_wall_map(pos_b)) return true
 
@@ -542,11 +542,11 @@ function get_wall_check_pos(pos,dir_type)
 		right={x=1, y=0},
 		left ={x=-1,y=0}
 	}
-	
+
 	local base={}
 	base.x=pos.x+offset[dir_type].x
-	base.y=pos.y+offset[dir_type].y	
-	
+	base.y=pos.y+offset[dir_type].y
+
 	--vertex by dir type
 	local v=7
 	local ver={
@@ -561,14 +561,14 @@ function get_wall_check_pos(pos,dir_type)
 		right={a=ver[2],b=ver[4]},
 		left ={a=ver[1],b=ver[3]}
 	}
-	
+
 	local a={}
 	local b={}
 	a.x=base.x+verset[dir_type].a.x
 	a.y=base.y+verset[dir_type].a.y
 	b.x=base.x+verset[dir_type].b.x
 	b.y=base.y+verset[dir_type].b.y
-	
+
 	return a,b
 end
 
@@ -611,7 +611,7 @@ __gfx__
 00df55000055dd0000df55000055dd0000df55000055dd00ffffffff5555dddd0a0aa0a006066060000000000000000000000000000000000000000000000000
 00ddd5000055dd0000ddd5000055dd0000ddd5000055dd00ddffff555555dddda0a00a0a60600606000000000000000000000000000000000000000000000000
 00ddd5000055dd0000ddd0000055d000000dd5000005dd000dffff500555ddd00a0aa0a006066060000000000000000000000000000000000000000000000000
-00d0050000500d0000d00000005000000000050000000d0000fd5f000055dd00a000000a60000006000000000000000000000000000000000000000000000000
+00d0050000500d0000d00000005000000000050000000d0000fd5f000055dd00a000000a60066006000000000000000000000000000000000000000000000000
 00044000000440000004400000044000000440000004400000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00444400004444000044440000444400004444000044440000000000000000000000000000000000000000000000000000000000000000000000000000000000
 004ff40000444400004ff40000444400004ff4000044440000000000000000000000000000000000000000000000000000000000000000000000000000000000
