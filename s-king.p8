@@ -4,18 +4,16 @@ __lua__
 
 --[[
 todo:
-create parent class girl and old_man
+create ai system
+create action system
+create nav system
 ]]
 
---[[
-defines
-]]
+-- defines ---------------------------------------------------
 local draw_min_y=7
 local penalty_char="s"
 
---[[
-collision
-]]
+-- collision ---------------------------------------------------
 col={}
 col.new=function(w,h)
 	local obj={}
@@ -59,9 +57,7 @@ function check_col(col_a,col_b)
 	return true
 end
 
---[[
-actor functions
---]]
+-- actor ---------------------------------------------------
 local default_anim_interval=16
 actor={}
 actor.new=function(spr_offset)
@@ -96,10 +92,10 @@ actor.new=function(spr_offset)
 	return obj
 end
 
+-- npc ---------------------------------------------------
 --[[
-npc
-
-@arg spr_offset: sprite offset
+	npc
+	@arg spr_offset: sprite offset
 ]]
 local param_npc_sight_offset={x=2,y=8}
 npc={}
@@ -146,9 +142,7 @@ npc.new=function(spr_offset)
 	return obj
 end
 
---[[
-girl
-]]
+-- girl ---------------------------------------------------
 girl={}
 girl.new=function()
 	local obj=npc.new(0x10)
@@ -203,9 +197,7 @@ girl.new=function()
 	return obj
 end
 
---[[
- old_man
-]]
+-- old man ---------------------------------------------------
 old_man={}
 old_man.new=function()
 	local obj=npc.new(0x30)
@@ -213,9 +205,7 @@ old_man.new=function()
 	return obj
 end
 
---[[
- player
-]]
+-- player ---------------------------------------------------
 player={}
 player.new=function()
 	local obj=actor.new(0)
@@ -264,9 +254,8 @@ point.new=function()
 
 	return obj
 end
---[[
-actor functions
---]]
+
+-- actor function ---------------------------------------------------
 function is_not_real(actor)
 	return(not actor.is_real)
 end
@@ -312,87 +301,7 @@ function sort_min_y(acts)
 	end
 end
 
---[[
-original func
---]]
-function _init()
-	actors={}
-
-	--player
-	pl=player.new()
-	add(actors,pl)
-	init_player(pl)
-
-	--girls
-	girls_max=10
-	girls={}
-	for i=1,girls_max do
-		girls[i]=girl.new()
-		add(actors,girls[i])
-	end
-
-	--old_man
-	debug_print=nil
-	old_mans_max=1
-	old_mans={}
-	for i=1,old_mans_max do
-		old_mans[i]=old_man.new()
-		init_old_man(old_mans[i])
-		add(actors,old_mans[i])
-	end
-
-	--point
-	pt=point.new()
-
-	--game status
-	game_status="in_game"
-	is_pushed_button=false
-
-	--debug
-	debug_init()
-	--debug_print=nil
-end
-
-function _update()
-	if game_status=="in_game" then
-		update_old_mans(old_mans)
-		update_player(pl)
-		update_girls_wave(girls)
-		update_girls(girls)
-	elseif game_status=="game_over" then
-		if is_pushed_button==false then
-			if btn(4) or btn(5) then
-				_init()
-			end
-		end
- end
-
- is_pushed_button=(btn(4) or btn(5))
-end
-
-function _draw()
-	map(0,0,0,0,16,16)
-	-- draw all actor
-	draw_actors=actors
-	sort_min_y(draw_actors)
-	foreach(draw_actors,draw_actor)
-
-	-- draw score
-	pt:draw()
-
-	if game_status=="game_over" then
-		rectfill(0,56,127,72,0)
-		print("game over",48,56,7)
-		print("score:" .. pt.score,48,64,7)
- end
-
-	-- debug
-	debug_draw()
-end
-
---[[
-girls functions
---]]
+-- girls function ---------------------------------------------------
 function update_girls(gls)
 	update_girls_sight(gls)
 	update_girls_ai(gls)
@@ -534,9 +443,7 @@ function get_can_enable_girl(gls)
 	return nil
 end
 
---[[
-old man function
-]]
+-- old man function ---------------------------------------------------
 function init_old_man(old_man)
 	old_man.is_real=true
 	old_man.x=16
@@ -557,9 +464,7 @@ function update_old_mans_anim(old_mans)
 	foreach(old_mans,anim_actor)
 end
 
---[[
-player functions
---]]
+-- player function ---------------------------------------------------
 function init_player(p)
 	p.is_real=true
 	p.x=72
@@ -665,9 +570,83 @@ function is_wall_map(pos)
 	return (fget(map_val,0))
 end
 
---[[
-debug
---]]
+-- basic system ---------------------------------------------------
+function _init()
+	actors={}
+
+	--player
+	pl=player.new()
+	add(actors,pl)
+	init_player(pl)
+
+	--girls
+	girls_max=10
+	girls={}
+	for i=1,girls_max do
+		girls[i]=girl.new()
+		add(actors,girls[i])
+	end
+
+	--old_man
+	debug_print=nil
+	old_mans_max=1
+	old_mans={}
+	for i=1,old_mans_max do
+		old_mans[i]=old_man.new()
+		init_old_man(old_mans[i])
+		add(actors,old_mans[i])
+	end
+
+	--point
+	pt=point.new()
+
+	--game status
+	game_status="in_game"
+	is_pushed_button=false
+
+	--debug
+	debug_init()
+	--debug_print=nil
+end
+
+function _update()
+	if game_status=="in_game" then
+		update_old_mans(old_mans)
+		update_player(pl)
+		update_girls_wave(girls)
+		update_girls(girls)
+	elseif game_status=="game_over" then
+		if is_pushed_button==false then
+			if btn(4) or btn(5) then
+				_init()
+			end
+		end
+ end
+
+ is_pushed_button=(btn(4) or btn(5))
+end
+
+function _draw()
+	map(0,0,0,0,16,16)
+	-- draw all actor
+	draw_actors=actors
+	sort_min_y(draw_actors)
+	foreach(draw_actors,draw_actor)
+
+	-- draw score
+	pt:draw()
+
+	if game_status=="game_over" then
+		rectfill(0,56,127,72,0)
+		print("game over",48,56,7)
+		print("score:" .. pt.score,48,64,7)
+ end
+
+	-- debug
+	debug_draw()
+end
+
+-- debug ---------------------------------------------------
 view_col=false
 function debug_switch_npc()
 	view_col=not view_col
