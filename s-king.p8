@@ -112,20 +112,25 @@ npc.new=function(spr_offset)
 	obj.is_sight=false
 
 	--ai
-	obj.ai_table={}
 	obj.ai_system=ai_system.new(obj)
 
 	-- functions -----------------
 	obj.init=function(self)
-		self.ai_system:set_ai_table(self.ai_table)
+		if self.ai_system ~= nil then
+			self.ai_system:init(self.ai_table)
+		end
 	end
 
 	obj.update=function(self)
-		self.ai_system:update()
+		if self.ai_system ~= nil then
+			self.ai_system:update()
+		end
 	end
 
 	obj.draw_debug=function(self)
-		self.ai_system:draw_debug()
+		if self.ai_system ~= nil then
+			self.ai_system:draw_debug()
+		end
 	end
 
 	-- utils ---------------------
@@ -166,53 +171,158 @@ end
 ai_system={}
 ai_system.new=function(npc)
 	local obj={}
-	obj.table={}
-	obj.current_idx=1
-	obj.npc=npc
+	obj.ai_table={
+		ai_dummy.new(),
+	}
+	obj.steps={
+		step_idle=ai_step_idle.new(),
+		step_move=ai_step_move.new()
+	}
 
-	obj.set_ai_table=function(self,ai_table)
-		self.table=ai_table
+	obj.ai=nil
+	obj.step=nil
+	obj.step_table=nil
+
+	obj.init=function(self)
+		self:set_ai(self.ai_table[1])
+	end
+
+	obj.set_ai=function(self,ai)
+		self.ai=ai
+		self.step_table=self.ai:get_next_step_table(nil,nil)
+		self.step=self.steps[self.step_table["step"]]
 	end
 
 	obj.update=function(self)
-		if #self.table == 0 then
-			return
+		-- todo chek ai should wake
+		local result = self.step:check_sleep()
+		if result ~= false then
+			self.step:sleep()
+
+			self.step_table=self.ai:get_next_step_table(self.step_table,result)
+			self.step=self.steps[self.step_table["step"]]
+
+			self.step:wake()
 		end
 
-		local should_wake_idx = self:_check_should_wake_idx(self.npc,self.table)
-		if self.current_idx ~= should_wake_idx then
-			printh(should_wake_idx)
-			self.table[self.current_idx]:sleep(self.npc)
-			self.current_idx = should_wake_idx
-			self.table[self.current_idx]:wake(self.npc)
-		end
-
-		self.table[self.current_idx]:update(self.npc)
+		self.step:update()
 	end
 
 	obj.draw_debug=function(self)
-		if #self.table == 0 then
-			return
-		end
-		print(self.table[self.current_idx].name,1,2,5)
-	end
-
-	-- private function --------------------
-	obj._check_should_wake_idx=function(self,npc,ai_table)
-		local idx = 1
-		for ai in all(ai_table) do
-			if ai:should_wake(npc) == true then
-				return idx
-			end
-			idx += 1
-		end
-		printh("should wake ai is none")
-		return nil
+		print(self.step.name,1,8,5)
 	end
 
 	return obj
 end
 
+ai={}
+ai.new=function()
+	local obj={}
+	obj.step_table={}
+
+	obj.should_wake=function()
+		return true
+	end
+
+	obj.get_steps_key=function(self,step_table_key)
+		return self.step_table[step_table_key]["step"]
+	end
+
+	obj.get_next_step_table=function(self,step_table,step_result)
+		if step_table == nil then
+			return self.step_table["init"]
+		end
+
+		return self.step_table[step_table[step_result]]
+	end
+
+	return obj
+end
+
+ai_dummy={}
+ai_dummy.new=function()
+	local obj=ai.new()
+	obj.step_table={
+		init={step="step_move", success="idle", faild="idle"},
+		move={step="step_move", success="idle", faild="idle"},
+		idle={step="step_idle", success="move", faild="move"}
+	}
+	return obj
+end
+
+ai_step={}
+ai_step.new=function(name)
+	local obj={}
+	obj.name=name
+
+	obj.wake=function(self)
+	end
+	obj.update=function(self)
+	end
+	obj.check_sleep=function(self)
+		return "success"
+	end
+	obj.sleep=function(self)
+	end
+
+	return obj
+end
+
+ai_step_idle={}
+ai_step_idle.new=function(name)
+	local obj=ai_step.new("idle")
+	obj.timer=0
+	obj.time_max=30
+
+	obj.wake=function(self)
+		self.timer=0
+	end
+
+	obj.update=function(self)
+		self.timer+=1
+	end
+
+	obj.check_sleep=function(self)
+		if self.timer >= self.time_max then
+			return "success"
+		end
+
+		return false
+	end
+
+	obj.sleep=function(self)
+	end
+
+	return obj
+end
+
+ai_step_move={}
+ai_step_move.new=function(name)
+	local obj=ai_step.new("move")
+	obj.timer=0
+	obj.time_max=30
+
+	obj.wake=function(self)
+		self.timer=0
+	end
+
+	obj.update=function(self)
+		self.timer+=1
+	end
+
+	obj.check_sleep=function(self)
+		if self.timer >= self.time_max then
+			return "success"
+		end
+
+		return false
+	end
+	
+	obj.sleep=function(self)
+	end
+
+	return obj
+end
 -- girl ---------------------------------------------------
 girl={}
 girl.new=function()
@@ -220,6 +330,7 @@ girl.new=function()
 	-- normal,wonder,leav,escape
 	obj.status="normal"
 	obj.status_timer=0
+	obj.ai_system=nil
 
 	obj.respawn=function(self,x,y,dir_type)
 		self.x=x;self.y=y
@@ -273,59 +384,9 @@ old_man={}
 old_man.new=function()
 	local obj=npc.new(0x30)
 
-	obj.ai_table={ ai_chase.new(), ai_idle.new() }
-
 	return obj
 end
 
--- ai ---------------------------------------------------
---[[
-@brief ai
-@param name: ai name
-]]
-ai={}
-ai.new=function(name)
-	local obj={}
-	obj.name=name
-
-	obj.should_wake=function(self,npc)
-		return true
-	end
-
-	obj.wake=function(self,npc)
-	end
-
-	obj.update=function(self,npc)
-	end
-
-	obj.sleep=function(self,npc)
-	end
-
-	return obj
-end
-
--- old man ai---------------------------------------------------
-ai_chase={}
-ai_chase.new=function()
-	local obj=ai.new("chase")
-
-	obj.should_wake=function(self,npc)
-		return npc.is_sight == true
-	end
-
-	return obj
-end
-
-ai_idle={}
-ai_idle.new=function()
-	local obj=ai.new("idle")
-
-	obj.should_wake=function(self,npc)
-		return true
-	end
-
-	return obj
-end
 -- player ---------------------------------------------------
 player={}
 player.new=function()
@@ -754,9 +815,9 @@ function _update()
 				_init()
 			end
 		end
- end
+ 	end
 
- is_pushed_button=(btn(4) or btn(5))
+	is_pushed_button=(btn(4) or btn(5))
 end
 
 function _draw()
