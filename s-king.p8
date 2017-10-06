@@ -112,10 +112,14 @@ npc.new=function(spr_offset)
 	obj.is_sight=false
 
 	--ai
-	obj.ai_table={ ai_idle.new() }
-	obj.ai_system=ai_system.new(obj,obj.ai_table)
+	obj.ai_table={}
+	obj.ai_system=ai_system.new(obj)
 
 	-- functions -----------------
+	obj.init=function(self)
+		self.ai_system:set_ai_table(self.ai_table)
+	end
+
 	obj.update=function(self)
 		self.ai_system:update()
 	end
@@ -158,62 +162,46 @@ npc.new=function(spr_offset)
 	return obj
 end
 
--- ai ---------------------------------------------------
---[[
-@brief ai
-@param name: ai name
-]]
-ai={}
-ai.new=function(name)
-	local obj={}
-	obj.name=name
-
-	obj.should_wake=function(self,npc)
-		return true
-	end
-
-	obj.wake=function(self,npc)
-	end
-
-	obj.update=function(self,npc)
-	end
-
-	obj.sleep=function(self,npc)
-	end
-
-	return obj
-end
-
 -- ai system ----------------------------------------------
 ai_system={}
-ai_system.new=function(npc,ai_table)
+ai_system.new=function(npc)
 	local obj={}
-	obj.table=ai_table
+	obj.table={}
 	obj.current_idx=1
 	obj.npc=npc
 
+	obj.set_ai_table=function(self,ai_table)
+		self.table=ai_table
+	end
+
 	obj.update=function(self)
-		local should_wake_idx = self:_check_should_wake_idx(self.table)
-		if self.current_idx ~= should_wake_idx then
-			printh(should_wake_idx)
-			self.table[self.current_idx]:sleep(npc)
-			self.current_idx = should_wake_idx
-			self.table[self.current_idx]:wake(npc)
+		if #self.table == 0 then
+			return
 		end
 
-		self.table[self.current_idx]:update(npc)
+		local should_wake_idx = self:_check_should_wake_idx(self.npc,self.table)
+		if self.current_idx ~= should_wake_idx then
+			printh(should_wake_idx)
+			self.table[self.current_idx]:sleep(self.npc)
+			self.current_idx = should_wake_idx
+			self.table[self.current_idx]:wake(self.npc)
+		end
+
+		self.table[self.current_idx]:update(self.npc)
 	end
 
 	obj.draw_debug=function(self)
+		if #self.table == 0 then
+			return
+		end
 		print(self.table[self.current_idx].name,1,2,5)
 	end
 
 	-- private function --------------------
-	obj._check_should_wake_idx=function(self,ai_table)
+	obj._check_should_wake_idx=function(self,npc,ai_table)
 		local idx = 1
 		for ai in all(ai_table) do
-			if ai:should_wake() == true then
-				printh("return" .. idx)
+			if ai:should_wake(npc) == true then
 				return idx
 			end
 			idx += 1
@@ -284,6 +272,34 @@ end
 old_man={}
 old_man.new=function()
 	local obj=npc.new(0x30)
+
+	obj.ai_table={ ai_chase.new(), ai_idle.new() }
+
+	return obj
+end
+
+-- ai ---------------------------------------------------
+--[[
+@brief ai
+@param name: ai name
+]]
+ai={}
+ai.new=function(name)
+	local obj={}
+	obj.name=name
+
+	obj.should_wake=function(self,npc)
+		return true
+	end
+
+	obj.wake=function(self,npc)
+	end
+
+	obj.update=function(self,npc)
+	end
+
+	obj.sleep=function(self,npc)
+	end
 
 	return obj
 end
@@ -479,8 +495,16 @@ function move_npc(npc)
 	npc:move(0,speed)
 end
 
+function init_npc(npc)
+	if npc.init ~= nil then
+		npc:init()
+	end
+end
+
 function update_npc(npc)
-	npc:update()
+	if npc.update ~= nil then
+		npc:update()
+	end
 end
 
 function draw_debug_npc(npc)
@@ -703,6 +727,8 @@ function _init()
 		init_old_man(old_mans[i])
 		add(actors,old_mans[i])
 	end
+
+	foreach(actors,init_npc)
 
 	--point
 	pt=point.new()
