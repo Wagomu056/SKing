@@ -102,13 +102,29 @@ npc={}
 npc.new=function(spr_offset)
 	local obj=actor.new(spr_offset)
 
+	--move
 	obj.speed_rate=1.0
+	--sight
 	obj.sight_length=32
 	obj.sight=col.new(4,obj.sight_length)
 	obj.current_sight_offset={x=0,y=0}
 	obj.param_sight_offset=param_npc_sight_offset
 	obj.is_sight=false
 
+	--ai
+	obj.ai_table={ ai_idle.new() }
+	obj.ai_system=ai_system.new(obj,obj.ai_table)
+
+	-- functions -----------------
+	obj.update=function(self)
+		self.ai_system:update()
+	end
+
+	obj.draw_debug=function(self)
+		self.ai_system:draw_debug()
+	end
+
+	-- utils ---------------------
 	obj.set_sight_offset=function(self)
 		local off_x=obj.param_sight_offset.x
 		local off_y=obj.param_sight_offset.y
@@ -137,6 +153,73 @@ npc.new=function(spr_offset)
 
 	obj.get_speed=function(self)
 		return 0.3*self.speed_rate
+	end
+
+	return obj
+end
+
+-- ai ---------------------------------------------------
+--[[
+@brief ai
+@param name: ai name
+]]
+ai={}
+ai.new=function(name)
+	local obj={}
+	obj.name=name
+
+	obj.should_wake=function(self,npc)
+		return true
+	end
+
+	obj.wake=function(self,npc)
+	end
+
+	obj.update=function(self,npc)
+	end
+
+	obj.sleep=function(self,npc)
+	end
+
+	return obj
+end
+
+-- ai system ----------------------------------------------
+ai_system={}
+ai_system.new=function(npc,ai_table)
+	local obj={}
+	obj.table=ai_table
+	obj.current_idx=1
+	obj.npc=npc
+
+	obj.update=function(self)
+		local should_wake_idx = self:_check_should_wake_idx(self.table)
+		if self.current_idx ~= should_wake_idx then
+			printh(should_wake_idx)
+			self.table[self.current_idx]:sleep(npc)
+			self.current_idx = should_wake_idx
+			self.table[self.current_idx]:wake(npc)
+		end
+
+		self.table[self.current_idx]:update(npc)
+	end
+
+	obj.draw_debug=function(self)
+		print(self.table[self.current_idx].name,1,2,5)
+	end
+
+	-- private function --------------------
+	obj._check_should_wake_idx=function(self,ai_table)
+		local idx = 1
+		for ai in all(ai_table) do
+			if ai:should_wake() == true then
+				printh("return" .. idx)
+				return idx
+			end
+			idx += 1
+		end
+		printh("should wake ai is none")
+		return nil
 	end
 
 	return obj
@@ -205,6 +288,28 @@ old_man.new=function()
 	return obj
 end
 
+-- old man ai---------------------------------------------------
+ai_chase={}
+ai_chase.new=function()
+	local obj=ai.new("chase")
+
+	obj.should_wake=function(self,npc)
+		return npc.is_sight == true
+	end
+
+	return obj
+end
+
+ai_idle={}
+ai_idle.new=function()
+	local obj=ai.new("idle")
+
+	obj.should_wake=function(self,npc)
+		return true
+	end
+
+	return obj
+end
 -- player ---------------------------------------------------
 player={}
 player.new=function()
@@ -374,6 +479,16 @@ function move_npc(npc)
 	npc:move(0,speed)
 end
 
+function update_npc(npc)
+	npc:update()
+end
+
+function draw_debug_npc(npc)
+	if npc.draw_debug ~= nil then
+		npc:draw_debug()
+	end
+end
+
 function update_girls_anim(gls)
 	foreach(gls,anim_actor)
 end
@@ -451,16 +566,8 @@ function init_old_man(old_man)
 end
 
 function update_old_mans(old_mans)
-	update_old_mans_action(old_mans)
-	update_old_mans_anim(old_mans)
-
-end
-
-function update_old_mans_action(old_mans)
+	foreach(old_mans,update_npc)
 	foreach(old_mans,move_npc)
-end
-
-function update_old_mans_anim(old_mans)
 	foreach(old_mans,anim_actor)
 end
 
@@ -644,6 +751,7 @@ function _draw()
 
 	-- debug
 	debug_draw()
+	foreach(actors,draw_debug_npc)
 end
 
 -- debug ---------------------------------------------------
