@@ -208,7 +208,7 @@ end
 ]]
 old_man={}
 old_man.new=function()
-	local obj=actor.new(0x30)
+	local obj=npc.new(0x30)
 
 	return obj
 end
@@ -434,7 +434,7 @@ end
 
 function update_girls_ai(gls)
 	foreach(gls,update_status)
-	foreach(gls,move_girl)
+	foreach(gls,move_npc)
 end
 
 function update_status(gl)
@@ -454,15 +454,15 @@ function update_status(gl)
 	end
 end
 
-function move_girl(gl)
-	if(not gl.is_real)return
+function move_npc(npc)
+	if(not npc.is_real)return
 
-	local speed=gl:get_speed()
-	if gl.dir_type=="up" then
+	local speed=npc:get_speed()
+	if npc.dir_type=="up" then
 		speed*=-1
 	end
 
-	gl:move(0,speed)
+	npc:move(0,speed)
 end
 
 function update_girls_anim(gls)
@@ -550,11 +550,7 @@ function update_old_mans(old_mans)
 end
 
 function update_old_mans_action(old_mans)
-	foreach(old_mans,update_old_man_action)
-end
-
-function update_old_man_action(old_man)
-	old_man:move(0,1)
+	foreach(old_mans,move_npc)
 end
 
 function update_old_mans_anim(old_mans)
