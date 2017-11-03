@@ -11,7 +11,7 @@ create nav system
 
 -- defines ---------------------------------------------------
 local draw_min_y=7
-local penalty_char="s"
+local penalty_char='\x87'
 
 -- collision ---------------------------------------------------
 col={}
@@ -423,14 +423,16 @@ point.new=function()
 								--.. " penalty:" .. self.penalty
 								,0,0,7)
 
-		local p_mark_x=127-(penalty_max*(8+1))
+		--local p_mark_x=127-(penalty_max*(8+1))
+		local p_mark_x=127-8
 		for i=1,penalty_max do
-			local color=6
+			local color=14
 			if i<=self.penalty then
-				color=10
+				color=6
 			end
 			print(penalty_char,p_mark_x,0,color)
-			p_mark_x+=8+1
+			--p_mark_x+=8+1
+			p_mark_x-=8+1
 		end
 	end
 
