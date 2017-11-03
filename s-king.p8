@@ -781,6 +781,7 @@ function _init()
 
 	--old_man
 	debug_print=nil
+	--[[
 	old_mans_max=1
 	old_mans={}
 	for i=1,old_mans_max do
@@ -788,7 +789,8 @@ function _init()
 		init_old_man(old_mans[i])
 		add(actors,old_mans[i])
 	end
-
+	--]]
+	
 	foreach(actors,init_npc)
 
 	--point
