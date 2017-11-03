@@ -169,6 +169,71 @@ npc.new=function(spr_offset)
 	return obj
 end
 
+-- sprite ----------------------------------------------
+local twinkle_spr={60,61,62}
+local twinkle_pos_x_min=0
+local twinkle_pos_x_max=127-8
+local twinkle_pos_y_min=16
+local twinkle_pos_y_max=64
+local twinkle_frame=2
+local twinkle_num=3
+twinkle={}
+twinkle.new=function()
+	local obj={}
+	obj.spr_idx=0
+	obj.pos={0,0}
+	obj.next_time=flr(rnd(twinkle_frame))
+
+	obj.init=function(self)
+		self:set_pos_rnd()
+	end
+
+	obj.update=function(self)
+		self.next_time+=1
+		if self.next_time >= twinkle_frame then
+			self:next_spr()
+			self.next_time=0
+
+			if self.spr_idx==0 then
+				self:set_pos_rnd()
+			end
+		end
+	end
+
+	obj.draw=function(self)
+		spr(twinkle_spr[self.spr_idx+1],self.pos[1],self.pos[2])
+	end
+
+	obj.next_spr=function(self)
+		self.spr_idx=(self.spr_idx+1)%(#twinkle_spr)
+	end
+
+	obj.set_pos_rnd=function(self)
+		local max_x=twinkle_pos_x_max
+		local min_x= twinkle_pos_x_min
+		local x=flr(rnd(max_x-min_x)+min_x)
+
+		local max_y=twinkle_pos_y_max
+		local min_y=twinkle_pos_y_min
+		local y=flr(rnd(max_y-min_y)+min_y)
+
+		self.pos={x,y}
+	end
+
+	return obj
+end
+
+ function init_twinkle(twinkles)
+ 	foreach(twinkles,call_init)
+ end 
+
+ function update_twinkle(twinkles)
+ 	foreach(twinkles,call_update)
+ end
+
+ function draw_twinkle(twinkles)
+ 	foreach(twinkles,call_draw)
+ end
 -- ai system ----------------------------------------------
 ai_system={}
 ai_system.new=function(npc)
@@ -477,7 +542,6 @@ function draw_actor(actor)
 
 	local spr_idx=bor(actor.spr_idx,actor.spr_offset)
 	if actor.spr_pal ~= nil then
-		printh(actor.spr_pal)
 		pal(9, spr_replace_tabe[actor.spr_pal])
 	end
 	spr(spr_idx,actor.x,actor.y)
@@ -807,6 +871,13 @@ function _init()
 	--point
 	pt=point.new()
 
+	--twinkle
+	twinkles={}
+	for i=1,twinkle_num do
+		twinkles[i]=twinkle.new()
+	end
+	init_twinkle(twinkles)
+
 	--game status
 	game_status="title"
 	is_pushed_button=false
@@ -824,6 +895,8 @@ function _update()
 				game_status="in_game"
 			end
 		end
+
+		update_twinkle(twinkles)
 	elseif game_status=="in_game" then
 		update_old_mans(old_mans)
 		update_player(pl)
@@ -877,6 +950,8 @@ function _draw()
 		if title_is_show then
 			print("\x97 to start",40,96,7)
 		end
+
+		draw_twinkle(twinkles)
 	else
 		map(0,0,0,0,16,16)
 		-- draw all actor
@@ -899,6 +974,19 @@ function _draw()
 	debug_draw()
 	foreach(actors,draw_debug_npc)
 	--]]
+end
+
+-- utile ---------------------------------------------------
+function call_init(obj)
+	obj:init()
+end
+
+function call_update(obj)
+	obj:update()
+end
+
+function call_draw(obj)
+	obj:draw()
 end
 
 -- debug ---------------------------------------------------
@@ -953,9 +1041,9 @@ __gfx__
 000ff000000ff000000f0000000f00000000f0000000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000000000000000000000000000000000
-00ffff0000ffff0000ffff0000ffff0000ffff0000ffff000fff7f0000f7fff00ff7ff0000ff7ff0000000000000000000000000000000000000000000000000
-007ff70000ffff00007ff70000ffff00007ff70000ffff000077ff0000ff7700007fff0000fff700000000000000000000000000000000000000000000000000
-00377300003333000037730000333300044773000033334000733300003337000033330000333300000000000000000000000000000000000000000000000000
+00ffff0000ffff0000ffff0000ffff0000ffff0000ffff000fff7f0000f7fff00ff7ff0000ff7ff0000000000000000000000000000700000007000000000000
+007ff70000ffff00007ff70000ffff00007ff70000ffff000077ff0000ff7700007fff0000fff700000000000000000000070000007770000777770000000000
+00377300003333000037730000333300044773000033334000733300003337000033330000333300000000000000000000000000000700000007000000000000
 04477300003333400447730000333340043773000033334004433300044333000033334000333340000000000000000000000000000000000000000000000000
 04333300003333400433330000333340043333000033334004333300043333000033334000333340000000000000000000000000000000000000000000000000
 04300300003003400400030000300040003000000000030004300300043003000030034000300340000000000000000000000000000000000000000000000000
