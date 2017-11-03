@@ -13,6 +13,8 @@ create nav system
 local draw_min_y=7
 local penalty_char='\x87'
 
+local spr_replace_tabe = {3,9,12,1,14,2,10}
+
 -- collision ---------------------------------------------------
 col={}
 col.new=function(w,h)
@@ -331,6 +333,7 @@ girl.new=function()
 	obj.status="normal"
 	obj.status_timer=0
 	obj.ai_system=nil
+	obj.spr_pal=flr(rnd(#spr_replace_tabe))+1
 
 	obj.respawn=function(self,x,y,dir_type)
 		self.x=x;self.y=y
@@ -338,6 +341,7 @@ girl.new=function()
 		self.is_real=true
 		self:set_status("normal")
 		self:set_sight_offset()
+		self.spr_pal=flr(rnd(#spr_replace_tabe))+1
 	end
 
 	obj.mirror_dir=function(self)
@@ -472,7 +476,12 @@ function draw_actor(actor)
 	if(is_not_real(actor))return
 
 	local spr_idx=bor(actor.spr_idx,actor.spr_offset)
+	if actor.spr_pal ~= nil then
+		printh(actor.spr_pal)
+		pal(9, spr_replace_tabe[actor.spr_pal])
+	end
 	spr(spr_idx,actor.x,actor.y)
+	pal()
 end
 
 function sort_min_y(acts)
@@ -803,7 +812,7 @@ function _init()
 	is_pushed_button=false
 
 	--debug
-	debug_init()
+	--debug_init()
 	--debug_print=nil
 end
 
@@ -880,14 +889,16 @@ function _draw()
 
 		if game_status=="game_over" then
 			rectfill(0,56,127,72,0)
-			print("game over",48,56,7)
-			print("score:" .. pt.score,48,64,7)
+			print("game over",48,58,7)
+			print("score:" .. pt.score,48,66,7)
 		end
  	end
 
 	-- debug
+	--[[
 	debug_draw()
 	foreach(actors,draw_debug_npc)
+	--]]
 end
 
 -- debug ---------------------------------------------------
